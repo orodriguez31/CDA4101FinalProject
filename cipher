@@ -1,0 +1,79 @@
+import random
+import time
+import pycuda.autoinit
+import pycuda.driver as drv
+import numpy
+
+
+
+from pycuda.compiler import SourceModule
+mod = SourceModule("""
+__global__ void multiply_them(float *dest, float *a, float *b)
+{
+  const int i = threadIdx.x;
+  dest[i] = a[i] * b[i];
+}
+""")
+
+multiply_them = mod.get_function("multiply_them")
+
+a = numpy.random.randn(400).astype(numpy.float32)
+b = numpy.random.randn(400).astype(numpy.float32)
+
+dest = numpy.zeros_like(a)
+multiply_them(
+        drv.Out(dest), drv.In(a), drv.In(b),
+        block=(400,1,1), grid=(1,1))
+
+print dest-a*b
+
+
+
+
+#This is a representation of a Ceasar Cipher
+
+key = random.randint(1,26)
+
+CipherText = "This is a test of the Ceasar Cipher"
+
+print("Original Message is " + CipherText) 
+
+EncryptedMessage = ""
+
+for line in CipherText:
+    EncryptedChar = ord(line) + key
+    EncryptedMessage += chr(EncryptedChar)
+
+print("Encrypted Message is " + EncryptedMessage) 
+
+DecryptedMessage = ""
+
+for line in EncryptedMessage:
+    DecryptedChar = ord(line) - key
+    DecryptedMessage += chr(DecryptedChar)
+
+print("Original Message is " + DecryptedMessage) 
+print("\n\n\n\n\n")
+
+#attempt to brute force Ceasar Cipher
+
+bruteForceMessage = EncryptedMessage
+bruteForceDecryptedMessage = ""
+bruteForceKey = 0
+
+
+start = time.time()
+attempt_count = 0
+
+ 
+while bruteForceDecryptedMessage != DecryptedMessage:
+    bruteForceKey += 1
+    bruteForceDecryptedMessage = ""
+    attempt_count += 1
+    print(bruteForceDecryptedMessage)
+    for line in bruteForceMessage:
+        bruteForceEncryptedChar = ord(line) - bruteForceKey
+        bruteForceDecryptedMessage += chr(bruteForceEncryptedChar)
+print("Attempt " + str(attempt_count) +" to Brute Force: "+ bruteForceDecryptedMessage)
+
+print("Total time to brute force (Milliseconds):" + str(time.time() - start))
